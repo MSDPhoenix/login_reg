@@ -1,4 +1,7 @@
 from login_app.config.mysqlconnection import connectToMySQL
+from flask import flash
+import re
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA_Z0-9._-]+\.[a-zA-Z]+$')
 
 
 class User:
@@ -12,7 +15,7 @@ class User:
         self.updated_at = data['updated_at']
 
     @classmethod
-    def get_one(cls,data):
+    def get_by_id(cls,data):
         query=  """
                 SELECT * FROM users WHERE id=%(id)s;
                 """
@@ -20,6 +23,16 @@ class User:
         user = cls(result[0])
         return user
 
+    @classmethod
+    def get_by_email(cls,data):
+        query=  """
+                SELECT * FROM users WHERE email=%(email)s;
+                """
+        result = connectToMySQL('users').query_db(query,data)
+        user = cls(result[0])
+        return user
+
+    @classmethod
     def get_all(cls):
         query=  """
                 SELECT * FROM user;
@@ -31,6 +44,7 @@ class User:
             users.append(user)
         return users
 
+    @classmethod
     def save(cls,data):
         query=  """
                 INSERT INTO users   (first_name,last_name,email,password)
@@ -38,6 +52,7 @@ class User:
                 """
         return connectToMySQL('users').query_db(query,data)
 
+    @classmethod
     def update(cls,data):
         query=  """
                 UPDATE  users 
@@ -46,17 +61,54 @@ class User:
                 """
         connectToMySQL('users').query_db(query,data)
 
+    @classmethod
     def delete(cls,data):
         query=  """
                 DELETE FROM users WHERE id = %(user_id)s;
                 """
         connectToMySQL('users').query_db(query,data)
 
-    # def xxx(cls,data):
-    #     query=  """
+    @staticmethod
+    def validate_register(user):
+        is_valid = True
+        if len(user['first_name'] < 2):
+            flash('xxxx')
+            is_valid = False
+        if len(user['last_name'] < 2):
+            flash('xxxx')
+            is_valid = False
+        if len(user['password'] < 8):
+            flash('xxxx')
+            is_valid = False
+        if not EMAIL_REGEX.match(user['email']):
+            flash('xxxx')
+            is_valid = False
+        if user['password'] != user['confirm_password']:
+            flash('xxxx')
+            is_valid = False
+        return is_valid
 
-    #             """
-    #     result = connectToMySQL('users').query_db(query,data)
-    #     return xxxx
+    @staticmethod
+    def validate_login(user):
+        is_valid = True
+        # get user by email if email in database
+        # if password matches user password
+
+        if len(user['first_name'] < 2):
+            flash('xxxx')
+            is_valid = False
+        if len(user['last_name'] < 2):
+            flash('xxxx')
+            is_valid = False
+        if len(user['password'] < 8):
+            flash('xxxx')
+            is_valid = False
+        if not EMAIL_REGEX.match(user['email']):
+            flash('xxxx')
+            is_valid = False
+        if len(user['password'] < 8):
+            flash('xxxx')
+            is_valid = False
+        return is_valid
 
 
