@@ -2,7 +2,8 @@
 
 {% block body %}
 
-success.html
+
+<h1>{{session['user_id']}} Hello {{user.first_name}}!</h1>
 <a href="/">Go Back</a>
 
 {% endblock body %}
