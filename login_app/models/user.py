@@ -1,6 +1,10 @@
 from login_app.config.mysqlconnection import connectToMySQL
 from flask import flash
 import re
+from flask_bcrypt import Bcrypt
+from login_app import app
+bcrypt = Bcrypt(app)
+
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA_Z0-9._-]+\.[a-zA-Z]+$')
 db = 'log_registration'
 
@@ -72,71 +76,72 @@ class User:
         connectToMySQL(db).query_db(query,data)
 
     @staticmethod
-    def validate_register(user):
+    def validate_register(data):
         is_valid = True
-        if len(user['first_name']) < 2:
-            flash('First name must be at least 2 characters')
+        if len(data['first_name']) < 1:
+            flash('First name required','register')
             is_valid = False
-        elif not user['first_name'].isalpha():
-            flash('First name must contain letters only')
+        elif len(data['first_name']) < 2:
+            flash('First name must be at least 2 characters','register')
             is_valid = False
-        if len(user['last_name']) < 2:
-            flash('Last name must be at least 2 characters')
+        elif not data['first_name'].isalpha():
+            flash('First name must contain letters only','register')
             is_valid = False
-        elif not user['last_name'].isalpha():
-            flash('Last name must contain letters only')
+
+        if len(data['last_name']) < 1:
+            flash('Last name required','register')
             is_valid = False
-        if len(user['password']) < 8:
-            flash('Password must contain at least 8 characters')
+        elif len(data['last_name']) < 2:
+            flash('Last name must be at least 2 characters','register')
             is_valid = False
-        if user['password'] != user['confirm_password']:
-            flash('Password does not match confirm password')
+        elif not data['last_name'].isalpha():
+            flash('Last name must contain letters only','register')
             is_valid = False
-        if not EMAIL_REGEX.match(user['email']):
-            flash('Must use valid email format')
+
+        if len(data['email']) < 1:
+            flash('Email required','register')
             is_valid = False
-        if User.get_by_email(user):
-            flash('Email address already registered')
+        elif not EMAIL_REGEX.match(data['email']):
+            flash('Must use valid email format','register')
             is_valid = False
+        elif User.get_by_email(data):
+            flash('Email address already registered','register')
+            is_valid = False
+        if len(data['password']) < 1:
+            flash('Password required','register')
+            is_valid = False
+        elif len(data['password']) < 8:
+            flash('Password must contain at least 8 characters','register')
+            is_valid = False
+        elif data['password'] != data['confirm_password']:
+            flash('Password does not match confirm password','register')
+            is_valid = False
+
         return is_valid
 
-
-
-
-
-
-
-
     @staticmethod
-    def validate_login(user):
+    def validate_login(data):
         is_valid = True
-        # get user by email if email in database
-        # if password matches user password
+        user = User.get_by_email(data)
 
-        if len(user['first_name']) < 2:
-            flash('First name must be at least 2 characters')
+        if len(data['email']) < 1:
+            flash('Email required','login')
             is_valid = False
-        if len(user['last_name']) < 2:
-            flash('Last name must be at least 2 characters')
+        elif not EMAIL_REGEX.match(data['email']):
+            flash('Must use valid email format','login')
             is_valid = False
-        if not user['first_name'].isalpha():
-            flash('First name must contain letters only')
+        elif not user:
+            flash('Email address not found','login')
             is_valid = False
-        if not user['last_name'].isalpha():
-            flash('Last name must contain letters only')
-            is_valid = False
-        if len(user['password'] < 8):
-            flash('Password must contain at least 8 characters')
-            is_valid = False
-        if user['password'] != user['confirm_password']:
-            flash('Password does not match confirm password')
-            is_valid = False
-        if not EMAIL_REGEX.match(user['email']):
-            flash('Must use valid email format')
-            is_valid = False
-        if len(User.get_by_email(user)) > 0:
-            flash('Email address already registered')
-            is_valid = False
+
+        if len(data['password']) < 1:
+            flash('Password required','login')
+            is_valid = False      
+        elif user:
+            if not bcrypt.check_password_hash(user.password, data['password']):
+                flash('Password does not match','login')
+                is_valid = False
+            
         return is_valid
 
 
